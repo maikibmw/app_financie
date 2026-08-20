@@ -1,0 +1,132 @@
+# Architectural Plan & Technical Specification: Family Cashflow & Education Platform
+
+## 1. Project Overview
+A web and mobile application for proactive family financial management. Unlike traditional tracker apps, this platform focuses on future cashflow predictions, recurring fixed costs, fixed monthly budgets, and financial literacy for children.
+
+### Key Features
+* **Recurring & Fixed Expenses:** Tracking monthly subscriptions, loans, and custom monthly allowances (e.g., €600 for groceries).
+* **Irregular Annual Expenses:** Planning calendar for non-monthly fees (car insurance, school supplies, vacations).
+* **Cashflow Predictions:** Short-term (1-2 months) and long-term risk analysis (identifying deficit months).
+* **Family & Multi-user Roles:** Shared budget view between parents with customizable contribution levels.
+* **Gamified Kids Mode:** Age-adaptive interface (6-8 years and 9-15 years) with task-based rewards and real-world goals.
+* **Smart Tips & Deals (Manual/MVP):** Built-in recommendation Engine for cost-saving alternatives on subscriptions/services.
+
+---
+
+## 2. Tech Stack Definition
+* **Database & Authentication:** Supabase (PostgreSQL with Row Level Security).
+* **Backend:** Node.js (Next.js API routes / REST API endpoints).
+* **Web Frontend:** Next.js (React), Tailwind CSS, Shadcn UI.
+* **Mobile App (Phase 4):** React Native / Expo (sharing the same REST API).
+* **Deployment:** Vercel (Frontend & API), Supabase Cloud (Database).
+
+---
+
+## 3. Database Schema (PostgreSQL / Supabase)
+
+### `households`
+* `id` (UUID, Primary Key)
+* `name` (TEXT)
+* `created_at` (TIMESTAMP)
+
+### `users`
+* `id` (UUID, Primary Key, references Supabase Auth)
+* `household_id` (UUID, Foreign Key)
+* `role` (TEXT: 'parent' | 'child')
+* `display_name` (TEXT)
+* `age_group` (TEXT, optional: '6-8' | '9-15' | null)
+* `created_at` (TIMESTAMP)
+
+### `recurring_expenses`
+* `id` (UUID, Primary Key)
+* `household_id` (UUID, Foreign Key)
+* `created_by` (UUID, Foreign Key to users)
+* `title` (TEXT)
+* `amount` (NUMERIC)
+* `frequency` (TEXT: 'monthly' | 'yearly')
+* `category` (TEXT: 'housing' | 'subscription' | 'groceries_allowance' | 'insurance' | 'debt' | 'other')
+* `due_day` (INTEGER, 1-31)
+* `due_month` (INTEGER, optional 1-12 for yearly)
+* `is_active` (BOOLEAN)
+
+### `cashflow_predictions`
+* `id` (UUID, Primary Key)
+* `household_id` (UUID, Foreign Key)
+* `estimated_income` (NUMERIC)
+* `month` (INTEGER, 1-12)
+* `year` (INTEGER)
+
+### `kids_tasks`
+* `id` (UUID, Primary Key)
+* `household_id` (UUID, Foreign Key)
+* `assigned_to` (UUID, Foreign Key to users)
+* `title` (TEXT)
+* `reward_amount` (NUMERIC)
+* `status` (TEXT: 'pending' | 'completed' | 'approved')
+* `created_at` (TIMESTAMP)
+
+### `financial_goals`
+* `id` (UUID, Primary Key)
+* `household_id` (UUID, Foreign Key)
+* `user_id` (UUID, Foreign Key, optional for individual/kid goals)
+* `title` (TEXT)
+* `target_amount` (NUMERIC)
+* `current_amount` (NUMERIC)
+* `target_date` (DATE)
+
+### `smart_tips`
+* `id` (UUID, Primary Key)
+* `category` (TEXT)
+* `original_service` (TEXT)
+* `tip_text` (TEXT)
+* `potential_savings` (NUMERIC)
+* `link` (TEXT, optional)
+
+---
+
+## 4. API Endpoints Specification
+
+### Authentication & Household
+* `POST /api/auth/register` - Create user and new household.
+* `POST /api/auth/invite` - Add family member/child account.
+
+### Finances & Cashflow
+* `GET /api/finances/recurring` - Fetch all fixed & irregular expenses.
+* `POST /api/finances/recurring` - Add/Update fixed expense or allowance.
+* `GET /api/finances/prediction?months=6` - Calculate projected cashflow & risk flags for upcoming months.
+
+### Gamification & Kids
+* `GET /api/kids/tasks?userId={id}` - Fetch active tasks and rewards.
+* `POST /api/kids/tasks` - Create task (Parent).
+* `PATCH /api/kids/tasks/:id` - Update status (Child marks complete / Parent approves).
+* `GET /api/goals` - Fetch family and personal savings goals.
+
+---
+
+## 5. Development Roadmap (Phases)
+
+### Phase 1: Database Setup & Core Auth
+1. Initialize Supabase project & execute SQL migrations for schema.
+2. Setup Next.js application with Tailwind CSS.
+3. Implement registration, login, and household creation logic.
+
+### Phase 2: Recurring Expenses & Cashflow Engine (Web)
+1. Build UI for entering monthly subscriptions, fixed allowances, and annual bills.
+2. Develop backend logic for 1–12 month cashflow projections.
+3. Create visual dashboard highlighting deficit months and total fixed commitments.
+
+### Phase 3: Family Multi-User & Kids Mode
+1. Implement age-tailored UI views (simplified layout for ages 6-8, savings tracker for 9-15).
+2. Build task-assignment module with real-world goal milestones.
+3. Add manual Smart Tips / Deal suggestions widget.
+
+### Phase 4: Mobile App Integration
+1. Initialize React Native / Expo application.
+2. Connect mobile screens to the existing API endpoints.
+3. Enable push notifications for bill reminders and task approvals.
+
+## Očakávané a opakujúce sa výdavky (Planned & Recurring Transactions)
+- Podpora pre stav transakcie: `PLANNED` (očakávaná) vs `COMPLETED` (uhradená / DONE).
+- Sekcia na nástenke pre nadchádzajúce výdavky v aktuálnom mesiaci.
+- Možnosť jedným klikom označiť plánovaný výdavok ako uhradený (DONE), čím sa presunie do reálnej bilancie.
+- Podpora pre príznak opakujúcich sa/trvalých platieb (`isRecurring`).
