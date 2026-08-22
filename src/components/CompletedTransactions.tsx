@@ -9,6 +9,13 @@ interface CompletedTransactionsProps {
   onDelete: (id: string) => void;
 }
 
+const recLabel = (interval?: string) => {
+  if (interval === 'WEEKLY') return '🔄 Týždenne';
+  if (interval === 'MONTHLY') return '🔄 Mesačne';
+  if (interval === 'YEARLY') return '🔄 Ročne';
+  return null;
+};
+
 export default function CompletedTransactions({
   transactions,
   categories,
@@ -19,72 +26,71 @@ export default function CompletedTransactions({
 
   return (
     <section className="fin-card overflow-hidden">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="bg-gray-50 text-gray-500 text-xs uppercase font-medium">
-            <th className="px-6 py-3">Popis / Poskytovateľ</th>
-            <th className="px-6 py-3">Kategória</th>
-            <th className="px-6 py-3">Typ platby</th>
-            <th className="px-6 py-3">Dátum úhrady</th>
-            <th className="px-6 py-3 text-right">Suma</th>
-            <th className="px-6 py-3 text-center">Akcie</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 text-sm">
-          {transactions.map((tx) => {
+      {transactions.length === 0 ? (
+        <div className="p-8 text-center text-sm" style={{ color: 'var(--ink-faint)' }}>
+          Zatiaľ žiadne uhradené transakcie.
+        </div>
+      ) : (
+        <div>
+          {transactions.map((tx, i) => {
             const category = getCategory(tx.categoryId);
             const isIncome = tx.type === 'INCOME';
+            const rec = recLabel(tx.recurrenceInterval);
+
+            const meta = [category?.name || 'Neznáma', tx.date, rec, tx.provider ? `🏢 ${tx.provider}` : null]
+              .filter(Boolean)
+              .join(' · ');
 
             return (
-              <tr key={tx.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="font-medium text-gray-900">{tx.description}</div>
-                  {tx.provider && (
-                    <div className="text-xs text-gray-500">🏢 {tx.provider}</div>
-                  )}
-                </td>
-                <td className="px-6 py-4">
+              <div
+                key={tx.id}
+                className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-[#faf9fd] transition-colors"
+                style={{ borderTop: i === 0 ? 'none' : '1px solid #f2f0f7' }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className="inline-block px-2.5 py-0.5 text-xs rounded-full font-medium text-white"
-                    style={{ backgroundColor: category?.color || '#6b7280' }}
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: category?.color || '#9ca3af' }}
+                  />
+                  <div className="min-w-0">
+                    <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>
+                      {tx.description}
+                    </p>
+                    <p className="text-xs truncate" style={{ color: 'var(--ink-faint)' }}>
+                      {meta}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span
+                    className="font-semibold text-sm whitespace-nowrap"
+                    style={{ color: isIncome ? 'var(--pos)' : 'var(--ink)' }}
                   >
-                    {category?.name || 'Neznáma'}
+                    {isIncome ? '+' : '−'}{tx.amount.toFixed(2)} €
                   </span>
-                </td>
-                <td className="px-6 py-4 text-xs text-gray-500">
-                  {tx.recurrenceInterval && tx.recurrenceInterval !== 'NONE' ? '🔄 Opakovaná' : 'Jednorazová'}
-                </td>
-                <td className="px-6 py-4 text-gray-500">{tx.date}</td>
-                <td
-                  className={`px-6 py-4 text-right font-bold ${
-                    isIncome ? 'text-emerald-600' : 'text-gray-900'
-                  }`}
-                >
-                  {isIncome ? '+' : '-'}{tx.amount.toFixed(2)} €
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="flex justify-center items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => onEdit(tx)}
-                      className="text-gray-500 hover:text-blue-600 p-1 text-xs"
-                      title="Upraviť transakciu"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#efeafc] transition-colors text-sm"
+                      title="Upraviť"
                     >
-                      ✏️ Upraviť
+                      ✏️
                     </button>
                     <button
                       onClick={() => onDelete(tx.id)}
-                      className="text-gray-400 hover:text-red-600 p-1 text-xs"
-                      title="Vymazať transakciu"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#fdecec] transition-colors text-sm"
+                      title="Vymazať"
                     >
-                      🗑️ Zmazať
+                      🗑️
                     </button>
                   </div>
-                </td>
-              </tr>
+                </div>
+              </div>
             );
           })}
-        </tbody>
-      </table>
+        </div>
+      )}
     </section>
   );
 }

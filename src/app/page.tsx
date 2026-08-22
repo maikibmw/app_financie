@@ -14,6 +14,7 @@ import PlannedTransactions from '@/components/PlannedTransactions';
 import CompletedTransactions from '@/components/CompletedTransactions';
 import EditTransactionModal from '@/components/EditTransactionModal';
 import DataBackup from '@/components/DataBackup';
+import QuickAddTransaction from '@/components/QuickAddTransaction';
 
 // Vektorové ikonky sekcií (bez externej knižnice). Farbu určuje rodič cez currentColor.
 function SectionIcon({ name }: { name: string }) {
@@ -116,6 +117,9 @@ export default function Home() {
 
   // Aktívna záložka: prehlad | zaznamy | nastavenie
   const [activeTab, setActiveTab] = useState<'prehlad' | 'zaznamy' | 'nastavenie'>('prehlad');
+
+  // Rýchle pridanie transakcie (plávajúce "+")
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   // Načítanie uložených dát z localStorage pri prvom otvorení appky.
   // Toto je legitímne "načítanie z externého úložiska", preto tu zámerne
@@ -613,6 +617,34 @@ export default function Home() {
           onChange={setEditingTx}
           onSubmit={handleUpdateTransaction}
           onCancel={() => setEditingTx(null)}
+        />
+      )}
+
+      {/* Plávajúce tlačidlo na rýchle pridanie – dostupné na každej záložke */}
+      <button
+        onClick={() => setShowQuickAdd(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center z-40 transition-transform hover:scale-105"
+        style={{
+          background: 'var(--brand)',
+          color: '#ffffff',
+          boxShadow: '0 0 14px 5px rgba(255,255,255,0.85), 0 10px 24px -6px rgba(124,92,252,0.65)',
+        }}
+        title="Rýchle pridanie transakcie"
+        aria-label="Rýchle pridanie transakcie"
+      >
+        <span className="text-3xl font-light leading-none" style={{ marginTop: '-2px' }}>+</span>
+      </button>
+
+      {/* Okno rýchleho pridania */}
+      {showQuickAdd && (
+        <QuickAddTransaction
+          categories={categories}
+          onAdd={handleAddTransaction}
+          onClose={() => setShowQuickAdd(false)}
+          onGoToRecords={() => {
+            setShowQuickAdd(false);
+            setActiveTab('zaznamy');
+          }}
         />
       )}
     </main>
