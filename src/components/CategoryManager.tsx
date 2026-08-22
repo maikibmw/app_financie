@@ -10,8 +10,8 @@ interface CategoryManagerProps {
 }
 
 const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#f59e0b', '#10b981', 
-  '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#64748b'
+  '#ef4444', '#f97316', '#f59e0b', '#10b981',
+  '#06b6d4', '#3b82f6', '#6366f1', '#7c5cfc', '#ec4899', '#64748b',
 ];
 
 export default function CategoryManager({
@@ -27,105 +27,68 @@ export default function CategoryManager({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-
     onAddCategory({ name: name.trim(), type, color });
     setName('');
   };
 
   return (
-    <section className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-      <div 
-        className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center cursor-pointer select-none"
+    <section className="fin-card overflow-hidden">
+      <div
+        className="px-6 py-4 flex justify-between items-center cursor-pointer select-none"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-gray-800">Správa kategórií</h2>
-          <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-medium">
+          <span className="text-sm font-medium" style={{ color: 'var(--ink-soft)' }}>Zoznam kategórií</span>
+          <span className="fin-pill" style={{ background: 'var(--brand-soft)', color: 'var(--brand-dark)' }}>
             {categories.length}
           </span>
         </div>
-        <button className="text-sm font-medium text-blue-600 hover:text-blue-800">
-          {isOpen ? 'Skryť správu ▲' : 'Upraviť kategórie ▼'}
+        <button className="text-sm font-medium" style={{ color: 'var(--brand-dark)' }}>
+          {isOpen ? 'Skryť ▲' : 'Upraviť ▼'}
         </button>
       </div>
 
       {isOpen && (
-        <div className="p-6 space-y-6">
-          {/* Formulár pre novú kategóriu */}
-          <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-md border border-gray-200 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700">Pridať novú kategóriu</h3>
+        <div className="px-6 pb-6 space-y-6">
+          <form onSubmit={handleSubmit} className="p-4 rounded-2xl space-y-3" style={{ background: '#faf9fd', border: '1px solid var(--brand-border)' }}>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Pridať novú kategóriu</h3>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <input
-                type="text"
-                placeholder="Názov kategórie (napr. Škôlka, Koníčky)"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="p-2 border border-gray-300 rounded-md text-sm sm:col-span-2"
-                required
-              />
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as TransactionType)}
-                className="p-2 border border-gray-300 rounded-md text-sm"
-              >
+              <input type="text" placeholder="Názov (napr. Škôlka, Koníčky)" value={name}
+                onChange={(e) => setName(e.target.value)} className="fin-input sm:col-span-2" required />
+              <select value={type} onChange={(e) => setType(e.target.value as TransactionType)} className="fin-input">
                 <option value="EXPENSE">Výdavok</option>
                 <option value="INCOME">Príjem</option>
               </select>
-
-              <button
-                type="submit"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium p-2 rounded-md text-sm transition-colors"
-              >
-                + Pridať
-              </button>
+              <button type="submit" className="fin-btn fin-btn-primary">+ Pridať</button>
             </div>
 
-            {/* Výber farby */}
             <div className="flex items-center gap-2 pt-1">
-              <span className="text-xs text-gray-500">Farba značky:</span>
+              <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>Farba značky:</span>
               <div className="flex gap-1.5 flex-wrap">
                 {PRESET_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setColor(c)}
-                    className={`w-6 h-6 rounded-full transition-transform ${
-                      color === c ? 'ring-2 ring-offset-2 ring-gray-800 scale-110' : 'opacity-80 hover:opacity-100'
-                    }`}
-                    style={{ backgroundColor: c }}
-                  />
+                  <button key={c} type="button" onClick={() => setColor(c)}
+                    className={`w-6 h-6 rounded-full transition-transform ${color === c ? 'ring-2 ring-offset-2 scale-110' : 'opacity-80 hover:opacity-100'}`}
+                    style={{ backgroundColor: c }} />
                 ))}
               </div>
             </div>
           </form>
 
-          {/* Zoznam existujúcich kategórií */}
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-gray-700">Existujúce kategórie</h3>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Existujúce kategórie</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
               {categories.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="flex justify-between items-center p-2.5 rounded-md border border-gray-100 bg-white shadow-sm"
-                >
+                <div key={cat.id} className="flex justify-between items-center p-2.5 rounded-xl"
+                  style={{ background: '#ffffff', border: '1px solid var(--brand-border)' }}>
                   <div className="flex items-center gap-2.5">
-                    <span
-                      className="w-3.5 h-3.5 rounded-full"
-                      style={{ backgroundColor: cat.color || '#6b7280' }}
-                    />
-                    <span className="text-sm font-medium text-gray-800">{cat.name}</span>
-                    <span className="text-[10px] uppercase font-bold text-gray-400">
+                    <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: cat.color || '#6b7280' }} />
+                    <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{cat.name}</span>
+                    <span className="text-[10px] uppercase font-bold" style={{ color: 'var(--ink-faint)' }}>
                       ({cat.type === 'INCOME' ? 'Príjem' : 'Výdavok'})
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteCategory(cat.id)}
-                    className="text-gray-400 hover:text-red-600 text-xs px-1"
-                    title="Vymazať kategóriu"
-                  >
-                    ✕
-                  </button>
+                  <button type="button" onClick={() => onDeleteCategory(cat.id)}
+                    className="text-xs px-1" style={{ color: 'var(--ink-faint)' }} title="Vymazať kategóriu">✕</button>
                 </div>
               ))}
             </div>

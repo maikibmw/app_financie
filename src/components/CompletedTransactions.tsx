@@ -18,10 +18,7 @@ export default function CompletedTransactions({
   const getCategory = (catId: string) => categories.find((c) => c.id === catId);
 
   return (
-    <section className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-800">Uhradené transakcie</h2>
-      </div>
+    <section className="fin-card overflow-hidden">
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="bg-gray-50 text-gray-500 text-xs uppercase font-medium">

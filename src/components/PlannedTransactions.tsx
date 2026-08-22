@@ -26,10 +26,9 @@ export default function PlannedTransactions({
   const getCategory = (catId: string) => categories.find((c) => c.id === catId);
 
   return (
-    <section className="bg-amber-50/50 rounded-lg border border-amber-200 overflow-hidden shadow-sm">
-      <div className="px-6 py-4 border-b border-amber-200 bg-amber-100/50 flex flex-wrap justify-between items-center gap-2">
+    <section className="fin-card overflow-hidden">
+      <div className="px-6 py-4 flex flex-wrap justify-between items-center gap-2">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-amber-900">Očakávané výdavky</h2>
           <span className="text-xs font-medium bg-amber-200 text-amber-800 px-2.5 py-1 rounded-full">
             {visibleTransactions.length} položiek
           </span>
@@ -109,7 +108,7 @@ export default function PlannedTransactions({
                     <div className="flex justify-center items-center gap-2">
                       <button
                         onClick={() => onMarkCompleted(tx)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded shadow-sm transition-colors"
+                        className="fin-btn fin-btn-primary" style={{ padding: '0.35rem 0.8rem', fontSize: '0.72rem', background: 'var(--pos)' }}
                       >
                         DONE (Uhradené)
                       </button>

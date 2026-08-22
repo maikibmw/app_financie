@@ -104,12 +104,9 @@ export default function ContractManager({
   const contracts = latestCommitments(transactions);
 
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-4">
-      <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+    <div className="fin-card p-6 space-y-4">
+      <div className="flex justify-between items-center ">
         <div>
-          <h2 className="text-lg font-semibold text-gray-800">
-            Správa zmlúv & viazaností
-          </h2>
           <p className="text-xs text-gray-500">
             Každá služba zvlášť, s tipom len ak sa odporúčanie týka práve jej
           </p>

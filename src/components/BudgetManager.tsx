@@ -51,12 +51,11 @@ export default function BudgetManager({
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+    <div className="fin-card p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Mesačné rozpočty</h2>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-sm text-gray-500 hover:text-gray-700"
+          className="text-sm font-medium" style={{ color: 'var(--brand-dark)' }}
         >
           {isOpen ? 'Skryť' : 'Zobraziť'}
         </button>
@@ -72,7 +71,7 @@ export default function BudgetManager({
               <select
                 value={selectedCatId}
                 onChange={(e) => setPickedCatId(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                className="fin-input"
                 disabled={expenseCategories.length === 0}
               >
                 {expenseCategories.length === 0 && (
@@ -96,13 +95,13 @@ export default function BudgetManager({
                 placeholder="napr. 200"
                 value={limitAmount}
                 onChange={(e) => setLimitAmount(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                className="fin-input"
               />
             </div>
 
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium transition-colors disabled:opacity-50"
+              className="fin-btn fin-btn-primary"
               disabled={!selectedCatId}
             >
               Uložiť rozpočet

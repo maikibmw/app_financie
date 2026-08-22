@@ -113,11 +113,10 @@ export default function DataBackup({
   };
 
   return (
-    <section className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-3">
+    <section className="fin-card p-6 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-gray-800">Záloha dát</h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
             Stiahni si svoje dáta do súboru, alebo obnov appku zo skoršej zálohy.
           </p>
         </div>
@@ -125,13 +124,13 @@ export default function DataBackup({
         <div className="flex items-center gap-2">
           <button
             onClick={handleExport}
-            className="bg-slate-800 hover:bg-slate-900 text-white font-medium px-4 py-2 rounded-md text-sm transition-colors"
+            className="fin-btn fin-btn-primary"
           >
             ⬇ Stiahnuť zálohu
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="bg-white hover:bg-gray-50 text-slate-800 font-medium px-4 py-2 rounded-md text-sm border border-gray-300 transition-colors"
+            className="fin-btn fin-btn-ghost"
           >
             ⬆ Načítať zálohu
           </button>
@@ -150,15 +149,15 @@ export default function DataBackup({
         <p
           className={`text-sm rounded-md px-3 py-2 ${
             message.type === 'ok'
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              : 'bg-rose-50 text-rose-700 border border-rose-200'
+              ? 'text-emerald-700'
+              : 'text-rose-700'
           }`}
         >
           {message.text}
         </p>
       )}
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>
         Tip: zálohu si sprav vždy, keď zadáš veľa nových údajov. Súbor si môžeš uložiť
         do cloudu alebo poslať e-mailom ako poistku.
       </p>

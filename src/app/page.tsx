@@ -15,6 +15,92 @@ import CompletedTransactions from '@/components/CompletedTransactions';
 import EditTransactionModal from '@/components/EditTransactionModal';
 import DataBackup from '@/components/DataBackup';
 
+// Vektorové ikonky sekcií (bez externej knižnice). Farbu určuje rodič cez currentColor.
+function SectionIcon({ name }: { name: string }) {
+  const p = {
+    width: 18,
+    height: 18,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
+  switch (name) {
+    case 'calendar':
+      return (<svg {...p}><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M3 10h18M8 2v4M16 2v4" /></svg>);
+    case 'target':
+      return (<svg {...p}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg>);
+    case 'file':
+      return (<svg {...p}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>);
+    case 'chart':
+      return (<svg {...p}><path d="M3 21h18M7 21V11M12 21V6M17 21v-7" /></svg>);
+    case 'plus':
+      return (<svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></svg>);
+    case 'clock':
+      return (<svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>);
+    case 'check':
+      return (<svg {...p}><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></svg>);
+    case 'tag':
+      return (<svg {...p}><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z" /><circle cx="7" cy="7" r="1.2" /></svg>);
+    case 'wallet':
+      return (<svg {...p}><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2" /><path d="M3 7v10a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3" /><path d="M21 12h-4a2 2 0 0 0 0 4h4z" /></svg>);
+    case 'shield':
+      return (<svg {...p}><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" /><path d="M9 12l2 2 4-4" /></svg>);
+    default:
+      return null;
+  }
+}
+
+// Sekcia: farebná ikonka + ľudský názov + popisok (+ voliteľná nálepka), pod tým karta.
+function Section({
+  icon,
+  iconColor,
+  iconBg,
+  title,
+  subtitle,
+  badge,
+  children,
+}: {
+  icon: string;
+  iconColor: string;
+  iconBg: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-3 px-1">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: iconBg }}
+        >
+          <span style={{ color: iconColor, display: 'flex' }}>
+            <SectionIcon name={icon} />
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div>
+            <h2 className="text-base font-semibold" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
+              {title}
+            </h2>
+            {subtitle && (
+              <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>
+                {subtitle}
+              </p>
+            )}
+          </div>
+          {badge && <span className="fin-badge">{badge}</span>}
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -27,6 +113,9 @@ export default function Home() {
 
   // Prepínač pre zobrazenie všetkých plánovaných platieb
   const [showAllPlanned, setShowAllPlanned] = useState(false);
+
+  // Aktívna záložka: prehlad | zaznamy | nastavenie
+  const [activeTab, setActiveTab] = useState<'prehlad' | 'zaznamy' | 'nastavenie'>('prehlad');
 
   // Načítanie uložených dát z localStorage pri prvom otvorení appky.
   // Toto je legitímne "načítanie z externého úložiska", preto tu zámerne
@@ -332,109 +421,189 @@ export default function Home() {
   const monthLabel = `${SK_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
 
   if (!isLoaded) {
-    return <main className="max-w-4xl mx-auto p-8 text-center text-gray-500">Načítavam dáta...</main>;
+    return (
+      <main className="max-w-4xl mx-auto p-8 text-center" style={{ color: 'var(--ink-faint)' }}>
+        Načítavam dáta...
+      </main>
+    );
   }
 
+  const tabs: { id: typeof activeTab; label: string }[] = [
+    { id: 'prehlad', label: 'Prehľad' },
+    { id: 'zaznamy', label: 'Záznamy' },
+    { id: 'nastavenie', label: 'Nastavenie' },
+  ];
+
   return (
-    <main className="max-w-4xl mx-auto p-8 space-y-8">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Aplikácia Financie</h1>
-          <p className="text-gray-500">Prehľad príjmov a výdavkov</p>
+    <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      {/* Hlavička */}
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
+            style={{ background: 'var(--brand)' }}
+          >
+            👛
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold" style={{ color: 'var(--ink)' }}>
+              Naše financie
+            </h1>
+            <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>
+              {monthLabel}
+            </p>
+          </div>
         </div>
         <button
           onClick={handleResetData}
-          className="text-xs text-gray-500 hover:text-red-600 underline"
+          className="text-xs hover:underline"
+          style={{ color: 'var(--ink-faint)' }}
         >
           Obnoviť vzorové dáta
         </button>
       </header>
 
-      {/* Sumárne karty */}
-      <SummaryCards
-        totalIncome={totalIncome}
-        totalExpense={totalExpense}
-        balance={balance}
-        totalPlannedExpense={totalPlannedExpense}
-        showAllPlanned={showAllPlanned}
-      />
+      {/* Záložky */}
+      <nav className="flex gap-2">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex-1 py-2.5 rounded-full text-sm font-medium transition-colors fin-tab"
+              style={
+                isActive
+                  ? {
+                      background: 'var(--brand)',
+                      color: '#ffffff',
+                      border: '1.5px solid transparent',
+                      boxShadow: '0 4px 14px -4px rgba(124,92,252,0.5)',
+                    }
+                  : {
+                      background: '#ffffff',
+                      color: '#6b6480',
+                      border: '1.5px solid #e2daf6',
+                      boxShadow: '0 2px 8px -4px rgba(124,92,252,0.25)',
+                    }
+              }
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
 
-      {/* MODUL: Koľko mi ostáva (Safe-to-Spend) */}
-      <MonthlyOverview
-        monthLabel={monthLabel}
-        income={monthlyIncome}
-        fixedObligations={monthlyFixed}
-        envelopes={monthlyEnvelopes}
-        goals={monthlyGoals}
-        free={freeToSpend}
-        perDay={perDay}
-        remainingDays={remainingDays}
-        hasIncome={monthlyIncome > 0}
-      />
+      {/* ====================== ZÓNA: PREHĽAD ====================== */}
+      {activeTab === 'prehlad' && (
+        <div className="space-y-6">
+          <Section icon="calendar" iconColor="#7c5cfc" iconBg="#efeafc" title="Tento mesiac" subtitle="koľko ti reálne ostáva na míňanie">
+            <MonthlyOverview
+              monthLabel={monthLabel}
+              income={monthlyIncome}
+              fixedObligations={monthlyFixed}
+              envelopes={monthlyEnvelopes}
+              goals={monthlyGoals}
+              free={freeToSpend}
+              perDay={perDay}
+              remainingDays={remainingDays}
+              hasIncome={monthlyIncome > 0}
+            />
+          </Section>
 
-      {/* MODUL: Sporiace ciele */}
-      <GoalManager
-        goals={goalsWithCalc}
-        onAddGoal={handleAddGoal}
-        onDeleteGoal={handleDeleteGoal}
-        onContribute={handleContributeGoal}
-      />
+          <Section icon="target" iconColor="#0f9d6e" iconBg="#eafaf1" title="Na čo si sporíš" subtitle="dovolenka, rezerva, väčšia kúpa">
+            <GoalManager
+              goals={goalsWithCalc}
+              onAddGoal={handleAddGoal}
+              onDeleteGoal={handleDeleteGoal}
+              onContribute={handleContributeGoal}
+            />
+          </Section>
 
-      {/* MODUL: Záloha dát (export / import) */}
-      <DataBackup
-        transactions={transactions}
-        categories={categories}
-        budgets={budgets}
-        onImport={handleImportData}
-      />
-
-      {/* MODUL: Mesačné rozpočty */}
-      <BudgetManager
-        categories={categories}
-        transactions={transactions}
-        budgets={budgets}
-        onSaveBudget={handleSaveBudget}
-        onDeleteBudget={handleDeleteBudget}
-      />
-
-      {/* MODUL: Správa zmlúv & viazaností */}
-      <ContractManager
-        transactions={transactions}
-        categories={categories}
-        benchmarks={SAMPLE_BENCHMARKS}
-      />
-
-      {/* MODUL: Správa kategórií */}
-      <CategoryManager
-        categories={categories}
-        onAddCategory={handleAddCategory}
-        onDeleteCategory={handleDeleteCategory}
-      />
-
-      {/* Formulár na pridanie transakcie */}
-      <TransactionForm categories={categories} onAddTransaction={handleAddTransaction} />
-
-      {/* SEKCIA 1: Očakávané výdavky */}
-      {allPlannedTransactions.length > 0 && (
-        <PlannedTransactions
-          visibleTransactions={visiblePlannedTransactions}
-          categories={categories}
-          showAllPlanned={showAllPlanned}
-          todayStr={todayStr}
-          onToggleShowAll={() => setShowAllPlanned(!showAllPlanned)}
-          onMarkCompleted={markAsCompleted}
-          onEdit={setEditingTx}
-          onDelete={handleDeleteTransaction}
-        />
+          <Section icon="file" iconColor="#e0714f" iconBg="#fff2ec" title="Zmluvy a paušály" subtitle="strážime, kde sa dá ušetriť" badge="💡 Tipy na úspory">
+            <ContractManager
+              transactions={transactions}
+              categories={categories}
+              benchmarks={SAMPLE_BENCHMARKS}
+            />
+          </Section>
+        </div>
       )}
 
-      {/* SEKCIA 2: Realizované transakcie */}
-      <CompletedTransactions
-        transactions={completedTransactions}
-        categories={categories}
-        onEdit={setEditingTx}
-        onDelete={handleDeleteTransaction}
-      />
+      {/* ====================== ZÓNA: ZÁZNAMY ====================== */}
+      {activeTab === 'zaznamy' && (
+        <div className="space-y-6">
+          <Section icon="chart" iconColor="#64748b" iconBg="#f1f2f6" title="Spätný pohľad" subtitle="čo sa reálne udialo tento mesiac">
+            <SummaryCards
+              totalIncome={totalIncome}
+              totalExpense={totalExpense}
+              balance={balance}
+              totalPlannedExpense={totalPlannedExpense}
+              showAllPlanned={showAllPlanned}
+            />
+          </Section>
+
+          <Section icon="plus" iconColor="#7c5cfc" iconBg="#efeafc" title="Nová transakcia" subtitle="pridaj príjem, výdavok alebo záväzok">
+            <TransactionForm categories={categories} onAddTransaction={handleAddTransaction} />
+          </Section>
+
+          {allPlannedTransactions.length > 0 && (
+            <Section icon="clock" iconColor="#b4690e" iconBg="#fdf6ec" title="Očakávané výdavky" subtitle="platby, ktoré ťa ešte čakajú">
+              <PlannedTransactions
+                visibleTransactions={visiblePlannedTransactions}
+                categories={categories}
+                showAllPlanned={showAllPlanned}
+                todayStr={todayStr}
+                onToggleShowAll={() => setShowAllPlanned(!showAllPlanned)}
+                onMarkCompleted={markAsCompleted}
+                onEdit={setEditingTx}
+                onDelete={handleDeleteTransaction}
+              />
+            </Section>
+          )}
+
+          <Section icon="check" iconColor="#0f9d6e" iconBg="#eafaf1" title="Uhradené transakcie" subtitle="všetko, čo je už zaplatené">
+            <CompletedTransactions
+              transactions={completedTransactions}
+              categories={categories}
+              onEdit={setEditingTx}
+              onDelete={handleDeleteTransaction}
+            />
+          </Section>
+        </div>
+      )}
+
+      {/* ==================== ZÓNA: NASTAVENIE ==================== */}
+      {activeTab === 'nastavenie' && (
+        <div className="space-y-6">
+          <Section icon="tag" iconColor="#7c5cfc" iconBg="#efeafc" title="Kategórie" subtitle="ako si triediš príjmy a výdavky">
+            <CategoryManager
+              categories={categories}
+              onAddCategory={handleAddCategory}
+              onDeleteCategory={handleDeleteCategory}
+            />
+          </Section>
+
+          <Section icon="wallet" iconColor="#0f9d6e" iconBg="#eafaf1" title="Rozpočty (obálky)" subtitle="mesačné limity na bežné míňanie">
+            <BudgetManager
+              categories={categories}
+              transactions={transactions}
+              budgets={budgets}
+              onSaveBudget={handleSaveBudget}
+              onDeleteBudget={handleDeleteBudget}
+            />
+          </Section>
+
+          <Section icon="shield" iconColor="#64748b" iconBg="#f1f2f6" title="Záloha dát" subtitle="stiahni si dáta alebo obnov zo zálohy">
+            <DataBackup
+              transactions={transactions}
+              categories={categories}
+              budgets={budgets}
+              onImport={handleImportData}
+            />
+          </Section>
+        </div>
+      )}
 
       {/* MODAL OKNO PRE ÚPRAVU TRANSAKCIE */}
       {editingTx && (

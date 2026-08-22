@@ -8,6 +8,7 @@ interface SummaryCardsProps {
   showAllPlanned: boolean;
 }
 
+// Zoštíhlený spätný pohľad – čo sa reálne udialo (doplnok k hlavnému prehľadu).
 export default function SummaryCards({
   totalIncome,
   totalExpense,
@@ -15,28 +16,28 @@ export default function SummaryCards({
   totalPlannedExpense,
   showAllPlanned,
 }: SummaryCardsProps) {
+  const items = [
+    { label: 'Príjmy', value: `+${totalIncome.toFixed(2)} €`, color: 'var(--pos)', bg: 'var(--pos-soft)' },
+    { label: 'Výdavky', value: `-${totalExpense.toFixed(2)} €`, color: 'var(--neg)', bg: 'var(--neg-soft)' },
+    { label: 'Bilancia', value: `${balance.toFixed(2)} €`, color: 'var(--ink)', bg: '#f6f6f8' },
+    {
+      label: `Očakávané ${showAllPlanned ? '(celkovo)' : '(mesiac)'}`,
+      value: `-${totalPlannedExpense.toFixed(2)} €`,
+      color: 'var(--warn)',
+      bg: 'var(--warn-soft)',
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-        <p className="text-sm font-medium text-emerald-600">Príjmy</p>
-        <p className="text-2xl font-bold text-emerald-700">+{totalIncome.toFixed(2)} €</p>
+    <section className="fin-card p-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {items.map((it) => (
+          <div key={it.label} className="rounded-2xl p-3" style={{ background: it.bg }}>
+            <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>{it.label}</p>
+            <p className="text-lg font-semibold mt-0.5" style={{ color: it.color }}>{it.value}</p>
+          </div>
+        ))}
       </div>
-      <div className="p-4 bg-rose-50 rounded-lg border border-rose-200">
-        <p className="text-sm font-medium text-rose-600">Výdavky</p>
-        <p className="text-2xl font-bold text-rose-700">-{totalExpense.toFixed(2)} €</p>
-      </div>
-      <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <p className="text-sm font-medium text-slate-600">Bilancia</p>
-        <p className={`text-2xl font-bold ${balance >= 0 ? 'text-slate-800' : 'text-rose-600'}`}>
-          {balance.toFixed(2)} €
-        </p>
-      </div>
-      <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-        <p className="text-sm font-medium text-amber-600">
-          Očakávané {showAllPlanned ? '(celkovo)' : '(tento mesiac)'}
-        </p>
-        <p className="text-2xl font-bold text-amber-700">-{totalPlannedExpense.toFixed(2)} €</p>
-      </div>
-    </div>
+    </section>
   );
 }

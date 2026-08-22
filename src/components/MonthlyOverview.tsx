@@ -24,21 +24,26 @@ export default function MonthlyOverview({
   hasIncome,
 }: MonthlyOverviewProps) {
   const isNegative = free < 0;
+  const heroColor = isNegative ? 'var(--neg)' : 'var(--ink)';
 
-  // Farby hlavného čísla podľa toho, či ostáva alebo chýba.
-  const heroColor = isNegative ? 'text-rose-600' : 'text-emerald-700';
-  const heroBg = isNegative ? 'bg-rose-50' : 'bg-emerald-50';
-  const heroIcon = isNegative ? '⚠️' : '💰';
+  const rows = [
+    { icon: '↙', label: 'Očakávaný príjem', hint: '', value: income, sign: '+', positive: true, dim: false },
+    { icon: '📄', label: 'Fixné záväzky', hint: 'hypotéka, paušály, poistky', value: fixedObligations, sign: '−', positive: false, dim: false },
+    { icon: '👛', label: 'Obálky', hint: 'potraviny, zábava (paušálne)', value: envelopes, sign: '−', positive: false, dim: false },
+    { icon: '🎯', label: 'Sporenie na ciele', hint: goals > 0 ? 'podľa tvojich cieľov' : 'zatiaľ žiadne ciele', value: goals, sign: '−', positive: false, dim: goals === 0 },
+  ];
 
   return (
-    <section className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+    <section className="fin-card-hero p-6">
       <div className="flex items-start justify-between mb-5">
         <div>
-          <p className="text-sm text-gray-500">Koľko mi ostáva ({monthLabel})</p>
-          <p className={`text-3xl font-bold ${heroColor}`}>
-            {isNegative ? '' : ''}{free.toFixed(2)} €
+          <p className="text-sm" style={{ color: 'var(--ink-faint)' }}>
+            Koľko mi ostáva ({monthLabel})
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-4xl font-semibold mt-1" style={{ color: heroColor }}>
+            {free.toFixed(2)} €
+          </p>
+          <p className="text-xs mt-1.5" style={{ color: 'var(--ink-faint)' }}>
             {!hasIncome
               ? 'Zadaj svoj príjem (výplatu), aby appka vedela počítať.'
               : isNegative
@@ -46,55 +51,46 @@ export default function MonthlyOverview({
               : `voľné na míňanie · ostáva ${remainingDays} dní · ≈ ${perDay.toFixed(2)} € na deň`}
           </p>
         </div>
-        <div className={`w-12 h-12 rounded-full ${heroBg} flex items-center justify-center text-2xl`}>
-          {heroIcon}
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+          style={{ background: isNegative ? 'var(--neg-soft)' : 'var(--pos-soft)' }}
+        >
+          {isNegative ? '⚠️' : '💰'}
         </div>
       </div>
 
-      <div className="flex flex-col gap-0.5">
-        {/* Príjem */}
-        <div className="flex items-center justify-between px-3 py-2.5 bg-emerald-50 rounded-md">
-          <span className="text-sm text-emerald-700">↙ Očakávaný príjem</span>
-          <span className="text-sm font-semibold text-emerald-700">+ {income.toFixed(2)} €</span>
-        </div>
-
-        {/* Fixné záväzky */}
-        <div className="flex items-center justify-between px-3 py-2.5">
-          <span className="text-sm text-gray-800">
-            📄 Fixné záväzky{' '}
-            <span className="text-xs text-gray-400">hypotéka, paušály, poistky</span>
-          </span>
-          <span className="text-sm font-semibold text-gray-800">− {fixedObligations.toFixed(2)} €</span>
-        </div>
-
-        {/* Obálky */}
-        <div className="flex items-center justify-between px-3 py-2.5">
-          <span className="text-sm text-gray-800">
-            👛 Obálky{' '}
-            <span className="text-xs text-gray-400">potraviny, zábava (paušálne)</span>
-          </span>
-          <span className="text-sm font-semibold text-gray-800">− {envelopes.toFixed(2)} €</span>
-        </div>
-
-        {/* Sporenie na ciele */}
-        <div className={`flex items-center justify-between px-3 py-2.5 ${goals > 0 ? '' : 'opacity-60'}`}>
-          <span className="text-sm text-gray-800">
-            🎯 Sporenie na ciele{' '}
-            <span className="text-xs text-gray-400">
-              {goals > 0 ? 'podľa tvojich cieľov' : 'zatiaľ žiadne ciele'}
+      <div className="flex flex-col gap-1">
+        {rows.map((r) => (
+          <div
+            key={r.label}
+            className="flex items-center justify-between px-3 py-2.5 rounded-2xl"
+            style={{
+              background: r.positive ? 'var(--pos-soft)' : 'transparent',
+              opacity: r.dim ? 0.55 : 1,
+            }}
+          >
+            <span className="text-sm" style={{ color: r.positive ? 'var(--pos)' : 'var(--ink)' }}>
+              {r.icon} {r.label}{' '}
+              {r.hint && <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>{r.hint}</span>}
             </span>
-          </span>
-          <span className={`text-sm font-semibold ${goals > 0 ? 'text-gray-800' : 'text-gray-400'}`}>
-            − {goals.toFixed(2)} €
-          </span>
-        </div>
+            <span
+              className="text-sm font-semibold"
+              style={{ color: r.positive ? 'var(--pos)' : 'var(--ink)' }}
+            >
+              {r.sign} {r.value.toFixed(2)} €
+            </span>
+          </div>
+        ))}
 
-        <div className="h-px bg-gray-200 my-1.5" />
+        <div className="h-px my-2" style={{ background: 'var(--brand-border)' }} />
 
-        {/* Výsledok */}
-        <div className="flex items-center justify-between px-3 py-2.5">
-          <span className="text-sm font-semibold text-gray-800">Voľné na míňanie</span>
-          <span className={`text-lg font-bold ${heroColor}`}>= {free.toFixed(2)} €</span>
+        <div className="flex items-center justify-between px-3 py-1">
+          <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+            Voľné na míňanie
+          </span>
+          <span className="text-lg font-bold" style={{ color: isNegative ? 'var(--neg)' : 'var(--pos)' }}>
+            = {free.toFixed(2)} €
+          </span>
         </div>
       </div>
     </section>

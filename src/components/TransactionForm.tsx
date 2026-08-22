@@ -69,9 +69,7 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
   };
 
   return (
-    <section className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-4">
-      <h2 className="text-lg font-semibold text-gray-800">Pridať novú transakciu / Záväzok</h2>
-
+    <section className="fin-card p-6 space-y-4">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <input
@@ -79,7 +77,7 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
             placeholder="Popis (napr. Paušál Mne)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="fin-input"
             required
           />
           <input
@@ -88,13 +86,13 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
             placeholder="Suma v €"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="fin-input"
             required
           />
           <select
             value={type}
             onChange={(e) => setType(e.target.value as 'INCOME' | 'EXPENSE')}
-            className="p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="fin-input"
           >
             <option value="EXPENSE">Výdavok</option>
             <option value="INCOME">Príjem</option>
@@ -102,7 +100,7 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as TransactionStatus)}
-            className="p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="fin-input"
           >
             <option value="COMPLETED">Uhradené</option>
             <option value="PLANNED">Očakávané</option>
@@ -110,23 +108,23 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
 
           {status === 'PLANNED' && (
             <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">Dátum splatnosti:</label>
+              <label className="text-xs mb-1" style={{ color: 'var(--ink-soft)' }}>Dátum splatnosti:</label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="fin-input"
                 required
               />
             </div>
           )}
 
           <div className="flex flex-col">
-            <label className="text-xs text-gray-500 mb-1">Opakovanie platby:</label>
+            <label className="text-xs mb-1" style={{ color: 'var(--ink-soft)' }}>Opakovanie platby:</label>
             <select
               value={recurrenceInterval}
               onChange={(e) => setRecurrenceInterval(e.target.value as RecurrenceInterval)}
-              className="p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="fin-input"
             >
               <option value="NONE">Jednorazová platba</option>
               <option value="WEEKLY">Opakovať týždenne</option>
@@ -136,11 +134,11 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
           </div>
 
           <div className="flex flex-col">
-            <label className="text-xs text-gray-500 mb-1">Kategória:</label>
+            <label className="text-xs mb-1" style={{ color: 'var(--ink-soft)' }}>Kategória:</label>
             <select
               value={categoryId}
               onChange={(e) => setPickedCategoryId(e.target.value)}
-              className="p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="fin-input"
             >
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
@@ -156,51 +154,51 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="text-xs text-blue-600 font-medium hover:underline flex items-center gap-1"
+            className="text-xs font-medium hover:underline flex items-center gap-1" style={{ color: 'var(--brand-dark)' }}
           >
             {showAdvanced ? '▲ Skryť detaily zmluvy a viazanosti' : '▼ Pridať detaily zmluvy / Poskytovateľa (voliteľné)'}
           </button>
         </div>
 
         {showAdvanced && (
-          <div className="p-4 bg-slate-50 rounded-md border border-slate-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-4 rounded-2xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" style={{ background: '#faf9fd', border: '1px solid var(--brand-border)' }}>
             <div>
-              <label className="text-xs text-gray-600 block mb-1">Poskytovateľ / Firma:</label>
+              <label className="text-xs block mb-1" style={{ color: 'var(--ink-soft)' }}>Poskytovateľ / Firma:</label>
               <input
                 type="text"
                 placeholder="napr. Orange, SPP, VÚB"
                 value={provider}
                 onChange={(e) => setProvider(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                className="fin-input"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-600 block mb-1">Číslo zmluvy / VS:</label>
+              <label className="text-xs block mb-1" style={{ color: 'var(--ink-soft)' }}>Číslo zmluvy / VS:</label>
               <input
                 type="text"
                 placeholder="napr. 82391029"
                 value={contractNumber}
                 onChange={(e) => setContractNumber(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                className="fin-input"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-600 block mb-1">Koniec viazanosti / zmluvy:</label>
+              <label className="text-xs block mb-1" style={{ color: 'var(--ink-soft)' }}>Koniec viazanosti / zmluvy:</label>
               <input
                 type="date"
                 value={contractEndDate}
                 onChange={(e) => setContractEndDate(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                className="fin-input"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-600 block mb-1">Poznámka / Podmienky:</label>
+              <label className="text-xs block mb-1" style={{ color: 'var(--ink-soft)' }}>Poznámka / Podmienky:</label>
               <input
                 type="text"
                 placeholder="napr. zľava 10% pri predĺžení"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                className="fin-input"
               />
             </div>
           </div>
@@ -209,7 +207,7 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
         <div className="flex justify-end">
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-md text-sm transition-colors"
+            className="fin-btn fin-btn-primary"
           >
             Pridať transakciu
           </button>

@@ -19,7 +19,7 @@ export default function EditTransactionModal({
 }: EditTransactionModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold text-gray-900">Upraviť transakciu / Zmluvu</h3>
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
@@ -28,7 +28,7 @@ export default function EditTransactionModal({
               type="text"
               value={value.description}
               onChange={(e) => onChange({ ...value, description: e.target.value })}
-              className="w-full p-2 border rounded-md text-sm mt-1"
+              className="fin-input mt-1"
               required
             />
           </div>
@@ -43,7 +43,7 @@ export default function EditTransactionModal({
                 onChange={(e) =>
                   onChange({ ...value, amount: parseFloat(e.target.value) || 0 })
                 }
-                className="w-full p-2 border rounded-md text-sm mt-1"
+                className="fin-input mt-1"
                 required
               />
             </div>
@@ -53,7 +53,7 @@ export default function EditTransactionModal({
                 type="date"
                 value={value.date}
                 onChange={(e) => onChange({ ...value, date: e.target.value })}
-                className="w-full p-2 border rounded-md text-sm mt-1"
+                className="fin-input mt-1"
                 required
               />
             </div>
@@ -67,7 +67,7 @@ export default function EditTransactionModal({
                 onChange={(e) =>
                   onChange({ ...value, type: e.target.value as 'INCOME' | 'EXPENSE' })
                 }
-                className="w-full p-2 border rounded-md text-sm mt-1"
+                className="fin-input mt-1"
               >
                 <option value="EXPENSE">Výdavok</option>
                 <option value="INCOME">Príjem</option>
@@ -78,7 +78,7 @@ export default function EditTransactionModal({
               <select
                 value={value.categoryId}
                 onChange={(e) => onChange({ ...value, categoryId: e.target.value })}
-                className="w-full p-2 border rounded-md text-sm mt-1"
+                className="fin-input mt-1"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -99,7 +99,7 @@ export default function EditTransactionModal({
                 type="text"
                 value={value.provider || ''}
                 onChange={(e) => onChange({ ...value, provider: e.target.value })}
-                className="w-full p-2 border rounded-md text-sm mt-1"
+                className="fin-input mt-1"
               />
             </div>
             <div>
@@ -108,7 +108,7 @@ export default function EditTransactionModal({
                 type="text"
                 value={value.contractNumber || ''}
                 onChange={(e) => onChange({ ...value, contractNumber: e.target.value })}
-                className="w-full p-2 border rounded-md text-sm mt-1"
+                className="fin-input mt-1"
               />
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function EditTransactionModal({
                 type="date"
                 value={value.contractEndDate || ''}
                 onChange={(e) => onChange({ ...value, contractEndDate: e.target.value })}
-                className="w-full p-2 border rounded-md text-sm mt-1"
+                className="fin-input mt-1"
               />
             </div>
             <div>
@@ -129,7 +129,7 @@ export default function EditTransactionModal({
                 type="text"
                 value={value.note || ''}
                 onChange={(e) => onChange({ ...value, note: e.target.value })}
-                className="w-full p-2 border rounded-md text-sm mt-1"
+                className="fin-input mt-1"
               />
             </div>
           </div>
@@ -138,13 +138,13 @@ export default function EditTransactionModal({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border rounded-md text-sm text-gray-600 hover:bg-gray-100"
+              className="fin-btn fin-btn-ghost"
             >
               Zrušiť
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+              className="fin-btn fin-btn-primary"
             >
               Uložiť zmeny
             </button>
