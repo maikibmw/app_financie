@@ -9,6 +9,7 @@ import ContractManager from '@/components/ContractManager';
 import SummaryCards from '@/components/SummaryCards';
 import MonthlyOverview from '@/components/MonthlyOverview';
 import GoalManager, { GoalWithCalc } from '@/components/GoalManager';
+import CashflowChart, { CashflowMonth } from '@/components/CashflowChart';
 import TransactionForm from '@/components/TransactionForm';
 import PlannedTransactions from '@/components/PlannedTransactions';
 import CompletedTransactions from '@/components/CompletedTransactions';
@@ -37,6 +38,8 @@ function SectionIcon({ name }: { name: string }) {
       return (<svg {...p}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>);
     case 'chart':
       return (<svg {...p}><path d="M3 21h18M7 21V11M12 21V6M17 21v-7" /></svg>);
+    case 'trend':
+      return (<svg {...p}><path d="M3 17l5-5 4 4 8-8" /><path d="M17 4h4v4" /></svg>);
     case 'plus':
       return (<svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></svg>);
     case 'clock':
@@ -424,6 +427,86 @@ export default function Home() {
   ];
   const monthLabel = `${SK_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
 
+  // === Projekcia cashflow na najbližších 6 mesiacov ===
+  const SK_MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Máj', 'Jún', 'Júl', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+
+  // Aktívne opakované platby (jedna "šablóna" na sériu = plánované opakované).
+  const recurringPlanned = transactions.filter(
+    (t) => t.status === 'PLANNED' && t.recurrenceInterval && t.recurrenceInterval !== 'NONE'
+  );
+  // Jednorazové plánované platby (konkrétny mesiac).
+  const oneTimePlanned = transactions.filter(
+    (t) => t.status === 'PLANNED' && (!t.recurrenceInterval || t.recurrenceInterval === 'NONE')
+  );
+  // Obálky (rozpočty) platia každý mesiac.
+  const fullEnvelopes = budgets.reduce((acc, b) => acc + b.limitAmount, 0);
+
+  const occurrenceInMonth = (t: Transaction, monthNum: number): number => {
+    if (t.recurrenceInterval === 'MONTHLY') return t.amount;
+    if (t.recurrenceInterval === 'WEEKLY') return t.amount * (52 / 12);
+    if (t.recurrenceInterval === 'YEARLY') {
+      const txMonth = Number((t.dueDate || t.date).slice(5, 7)) - 1;
+      return txMonth === monthNum ? t.amount : 0;
+    }
+    return 0;
+  };
+
+  const cashflowMonths: CashflowMonth[] = [-2, -1, 0, 1, 2, 3].map((off) => {
+    const d = new Date(today.getFullYear(), today.getMonth() + off, 1);
+    const mo = d.getMonth();
+    const key = `${d.getFullYear()}-${String(mo + 1).padStart(2, '0')}`;
+    const label = off === 0 ? 'Teraz' : SK_MONTHS_SHORT[mo];
+
+    // Minulé mesiace = skutočnosť (z uhradených transakcií).
+    if (off < 0) {
+      const inc = transactions
+        .filter((t) => t.status === 'COMPLETED' && t.type === 'INCOME' && t.date.slice(0, 7) === key)
+        .reduce((acc, t) => acc + t.amount, 0);
+      const exp = transactions
+        .filter((t) => t.status === 'COMPLETED' && t.type === 'EXPENSE' && t.date.slice(0, 7) === key)
+        .reduce((acc, t) => acc + t.amount, 0);
+      const isEmpty = inc === 0 && exp === 0;
+      return { label, income: inc, expense: exp, net: inc - exp, isCurrent: false, isPast: true, isEmpty };
+    }
+
+    // Aktuálny mesiac = reálne hodnoty (rovnaké ako "Koľko mi ostáva").
+    if (off === 0) {
+      return {
+        label,
+        income: monthlyIncome,
+        expense: monthlyFixed + monthlyEnvelopes + monthlyGoals,
+        net: freeToSpend,
+        isCurrent: true,
+        isPast: false,
+        isEmpty: false,
+      };
+    }
+
+    // Budúce mesiace = projekcia.
+    const oneTimeIncome = oneTimePlanned
+      .filter((t) => t.type === 'INCOME' && (t.dueDate || t.date).slice(0, 7) === key)
+      .reduce((acc, t) => acc + t.amount, 0);
+    const oneTimeExpense = oneTimePlanned
+      .filter((t) => t.type === 'EXPENSE' && (t.dueDate || t.date).slice(0, 7) === key)
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    const recurringIncome = recurringPlanned
+      .filter((t) => t.type === 'INCOME')
+      .reduce((acc, t) => acc + occurrenceInMonth(t, mo), 0);
+    const recurringExpense = recurringPlanned
+      .filter((t) => t.type === 'EXPENSE')
+      .reduce((acc, t) => acc + occurrenceInMonth(t, mo), 0);
+
+    const goalContribution = goalsWithCalc
+      .filter((g) => !g.isReached && g.goal.targetDate.slice(0, 7) >= key)
+      .reduce((acc, g) => acc + g.monthlyRequired, 0);
+
+    const income = monthlyIncome + recurringIncome + oneTimeIncome;
+    const expense = recurringExpense + fullEnvelopes + goalContribution + oneTimeExpense;
+
+    return { label, income, expense, net: income - expense, isCurrent: false, isPast: false, isEmpty: false };
+  });
+
   if (!isLoaded) {
     return (
       <main className="max-w-4xl mx-auto p-8 text-center" style={{ color: 'var(--ink-faint)' }}>
@@ -513,6 +596,10 @@ export default function Home() {
               remainingDays={remainingDays}
               hasIncome={monthlyIncome > 0}
             />
+          </Section>
+
+          <Section icon="trend" iconColor="#7c5cfc" iconBg="#efeafc" title="Výhľad do budúcna" subtitle="ako ti vyjdú najbližšie mesiace">
+            <CashflowChart months={cashflowMonths} />
           </Section>
 
           <Section icon="target" iconColor="#0f9d6e" iconBg="#eafaf1" title="Na čo si sporíš" subtitle="dovolenka, rezerva, väčšia kúpa">
