@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Category, Transaction, Budget } from '@/types';
 
 interface BudgetManagerProps {
@@ -18,20 +18,24 @@ export default function BudgetManager({
   onSaveBudget,
   onDeleteBudget,
 }: BudgetManagerProps) {
-  const expenseCategories = categories.filter((cat) => cat.type === 'EXPENSE');
-  const [selectedCatId, setSelectedCatId] = useState('');
+  const expenseCategories = useMemo(
+    () => categories.filter((cat) => cat.type === 'EXPENSE'),
+    [categories]
+  );
+
+  // Používateľom vybraná kategória (jeho "surová" voľba).
+  const [pickedCatId, setPickedCatId] = useState('');
   const [limitAmount, setLimitAmount] = useState('');
   const [isOpen, setIsOpen] = useState(true);
 
-  useEffect(() => {
-    if (expenseCategories.length === 0) {
-      setSelectedCatId('');
-      return;
+  // Skutočne platná kategória: ak vybraná neexistuje (napr. bola zmazaná),
+  // automaticky spadneme na prvú dostupnú. Odvodené bez useEffectu.
+  const selectedCatId = useMemo(() => {
+    if (expenseCategories.some((cat) => cat.id === pickedCatId)) {
+      return pickedCatId;
     }
-    if (!expenseCategories.some((cat) => cat.id === selectedCatId)) {
-      setSelectedCatId(expenseCategories[0].id);
-    }
-  }, [categories, selectedCatId]);
+    return expenseCategories[0]?.id ?? '';
+  }, [expenseCategories, pickedCatId]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +45,7 @@ export default function BudgetManager({
   };
 
   const handleEdit = (budget: Budget) => {
-    setSelectedCatId(budget.categoryId);
+    setPickedCatId(budget.categoryId);
     setLimitAmount(String(budget.limitAmount));
     setIsOpen(true);
   };
@@ -67,7 +71,7 @@ export default function BudgetManager({
               </label>
               <select
                 value={selectedCatId}
-                onChange={(e) => setSelectedCatId(e.target.value)}
+                onChange={(e) => setPickedCatId(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
                 disabled={expenseCategories.length === 0}
               >

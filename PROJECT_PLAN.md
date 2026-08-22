@@ -124,9 +124,3 @@ A web and mobile application for proactive family financial management. Unlike t
 1. Initialize React Native / Expo application.
 2. Connect mobile screens to the existing API endpoints.
 3. Enable push notifications for bill reminders and task approvals.
-
-## Očakávané a opakujúce sa výdavky (Planned & Recurring Transactions)
-- Podpora pre stav transakcie: `PLANNED` (očakávaná) vs `COMPLETED` (uhradená / DONE).
-- Sekcia na nástenke pre nadchádzajúce výdavky v aktuálnom mesiaci.
-- Možnosť jedným klikom označiť plánovaný výdavok ako uhradený (DONE), čím sa presunie do reálnej bilancie.
-- Podpora pre príznak opakujúcich sa/trvalých platieb (`isRecurring`).

@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
+Aplikácia Financie
+Jednoduchý webový správca rodinných financií — prehľad príjmov a výdavkov,
+plánované (očakávané) platby, mesačné rozpočty a evidencia zmlúv/paušálov
+s upozornením na možné úspory.
+> **Aktuálny stav:** funkčné MVP, ktoré beží celé v prehliadači.
+> Dáta sa ukladajú lokálne do `localStorage` (žiadny backend, žiadna databáza,
+> žiadne prihlásenie). Podrobný plán ďalšieho vývoja je v [`PROJECT_PLAN.md`](./PROJECT_PLAN.md).
+---
+Čo appka vie
+Príjmy a výdavky – pridávanie transakcií s kategóriou, sumou a dátumom.
+Očakávané platby – transakcie so stavom „Očakávané" s dátumom splatnosti;
+jedným klikom (tlačidlo DONE) sa označia ako uhradené a presunú do bilancie.
+Opakované platby – týždenné / mesačné / ročné; po uhradení sa automaticky
+vytvorí ďalšia plánovaná platba na nasledujúci termín.
+Mesačné rozpočty – limit na kategóriu s vizuálnym ukazovateľom čerpania.
+Správa zmlúv a viazaností – evidencia poskytovateľa, čísla zmluvy a konca
+viazanosti; pri niektorých kategóriách zobrazí tip na trhovú cenu a možnú úsporu.
+Vlastné kategórie – pridávanie a mazanie kategórií vrátane farby.
+Vzorové dáta – tlačidlom „Obnoviť vzorové dáta" sa appka vráti do
+východiskového stavu (užitočné pri testovaní).
+---
+Technológie
+Next.js 16 (App Router) + React 19
+TypeScript
+Tailwind CSS 4
+Ukladanie dát: localStorage v prehliadači
+---
+Spustenie na vlastnom počítači
+Potrebuješ nainštalovaný Node.js (verzia 20 alebo novšia).
 ```bash
+# 1. Nainštaluj závislosti
+npm install
+
+# 2. Spusti vývojový server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Potom otvor v prehliadači http://localhost:3000.
+Ďalšie príkazy:
+```bash
+npm run build   # produkčný build (overí, že sa všetko správne skompiluje)
+npm run start   # spustí produkčný build
+npm run lint    # kontrola kvality kódu (ESLint)
+```
+---
+Štruktúra projektu
+```
+src/
+├─ app/
+│  ├─ layout.tsx        # základný HTML obal stránky
+│  ├─ page.tsx          # hlavná stránka – stav appky a väčšina UI
+│  └─ globals.css       # globálne štýly (Tailwind)
+├─ components/
+│  ├─ BudgetManager.tsx    # mesačné rozpočty
+│  ├─ CategoryManager.tsx  # správa kategórií
+│  └─ ContractManager.tsx  # zmluvy, viazanosti a tipy na úspory
+├─ data/
+│  └─ mockData.ts       # východiskové kategórie, vzorové transakcie a benchmarky
+└─ types/
+   └─ index.ts          # spoločné TypeScript typy (Transaction, Category, Budget…)
+```
+---
+Dôležité: dáta a súkromie
+Všetky dáta zostávajú len v tvojom prehliadači (localStorage). To znamená:
+dáta sa neposielajú nikam na internet a nie sú zálohované,
+ak vymažeš históriu prehliadača alebo otvoríš appku v inom prehliadači/zariadení,
+dáta tam nebudú,
+appka je zatiaľ určená pre jedného používateľa na jednom zariadení.
+Zdieľanie medzi členmi rodiny, prihlásenie a záloha v cloude sú naplánované
+v ďalších fázach — pozri `PROJECT_PLAN.md`.
