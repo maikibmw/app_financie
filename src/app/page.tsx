@@ -7,6 +7,7 @@ import CategoryManager from '@/components/CategoryManager';
 import BudgetManager from '@/components/BudgetManager';
 import ContractManager from '@/components/ContractManager';
 import SummaryCards from '@/components/SummaryCards';
+import MonthlyOverview from '@/components/MonthlyOverview';
 import TransactionForm from '@/components/TransactionForm';
 import PlannedTransactions from '@/components/PlannedTransactions';
 import CompletedTransactions from '@/components/CompletedTransactions';
@@ -222,6 +223,49 @@ export default function Home() {
     .filter((t) => t.type === 'EXPENSE')
     .reduce((acc, t) => acc + t.amount, 0);
 
+  // === Mesačný prehľad "Koľko mi ostáva" (Safe-to-Spend) ===
+  // Berieme celý aktuálny mesiac ako plán dopredu.
+  const monthOf = (t: Transaction) => (t.dueDate || t.date).slice(0, 7);
+  const thisMonthTx = transactions.filter((t) => monthOf(t) === currentMonthStr);
+
+  // Príjem za mesiac: uhradený aj očakávaný.
+  const monthlyIncome = thisMonthTx
+    .filter((t) => t.type === 'INCOME')
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  // Fixné záväzky = všetky výdavkové transakcie tohto mesiaca
+  // (zapísané zmluvy: hypotéka, paušály, poistky – uhradené aj plánované).
+  const monthlyFixed = thisMonthTx
+    .filter((t) => t.type === 'EXPENSE')
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  // Obálky = paušálne rozpočty (budgety). Aby sme nezdvojovali sumy,
+  // počítame len rozpočty pre kategórie, ktoré tento mesiac nemajú
+  // vlastné zapísané výdavky.
+  const categoriesWithExpensesThisMonth = new Set(
+    thisMonthTx.filter((t) => t.type === 'EXPENSE').map((t) => t.categoryId)
+  );
+  const monthlyEnvelopes = budgets
+    .filter((b) => !categoriesWithExpensesThisMonth.has(b.categoryId))
+    .reduce((acc, b) => acc + b.limitAmount, 0);
+
+  // Ciele zatiaľ nerátame (pribudnú v ďalšom kroku).
+  const monthlyGoals = 0;
+
+  const freeToSpend = monthlyIncome - monthlyFixed - monthlyEnvelopes - monthlyGoals;
+
+  // Koľko dní ostáva do konca mesiaca (vrátane dneška).
+  const today = new Date();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const remainingDays = Math.max(1, daysInMonth - today.getDate() + 1);
+  const perDay = freeToSpend > 0 ? freeToSpend / remainingDays : 0;
+
+  const SK_MONTHS = [
+    'Január', 'Február', 'Marec', 'Apríl', 'Máj', 'Jún',
+    'Júl', 'August', 'September', 'Október', 'November', 'December',
+  ];
+  const monthLabel = `${SK_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
+
   if (!isLoaded) {
     return <main className="max-w-4xl mx-auto p-8 text-center text-gray-500">Načítavam dáta...</main>;
   }
@@ -248,6 +292,19 @@ export default function Home() {
         balance={balance}
         totalPlannedExpense={totalPlannedExpense}
         showAllPlanned={showAllPlanned}
+      />
+
+      {/* MODUL: Koľko mi ostáva (Safe-to-Spend) */}
+      <MonthlyOverview
+        monthLabel={monthLabel}
+        income={monthlyIncome}
+        fixedObligations={monthlyFixed}
+        envelopes={monthlyEnvelopes}
+        goals={monthlyGoals}
+        free={freeToSpend}
+        perDay={perDay}
+        remainingDays={remainingDays}
+        hasIncome={monthlyIncome > 0}
       />
 
       {/* MODUL: Záloha dát (export / import) */}
