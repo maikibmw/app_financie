@@ -76,13 +76,17 @@ export default function MonthlyOverview({
           <span className="text-sm font-semibold text-gray-800">− {envelopes.toFixed(2)} €</span>
         </div>
 
-        {/* Sporenie na ciele - zatiaľ placeholder */}
-        <div className="flex items-center justify-between px-3 py-2.5 opacity-60">
+        {/* Sporenie na ciele */}
+        <div className={`flex items-center justify-between px-3 py-2.5 ${goals > 0 ? '' : 'opacity-60'}`}>
           <span className="text-sm text-gray-800">
             🎯 Sporenie na ciele{' '}
-            <span className="text-xs text-gray-400">pribudne čoskoro</span>
+            <span className="text-xs text-gray-400">
+              {goals > 0 ? 'podľa tvojich cieľov' : 'zatiaľ žiadne ciele'}
+            </span>
           </span>
-          <span className="text-sm font-semibold text-gray-400">− {goals.toFixed(2)} €</span>
+          <span className={`text-sm font-semibold ${goals > 0 ? 'text-gray-800' : 'text-gray-400'}`}>
+            − {goals.toFixed(2)} €
+          </span>
         </div>
 
         <div className="h-px bg-gray-200 my-1.5" />

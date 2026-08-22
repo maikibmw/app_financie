@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Transaction, TransactionStatus, RecurrenceInterval, Category, Budget } from '@/types';
+import { Transaction, TransactionStatus, RecurrenceInterval, Category, Budget, Goal } from '@/types';
 import { MOCK_TRANSACTIONS, INITIAL_CATEGORIES, SAMPLE_BENCHMARKS } from '@/data/mockData';
 import CategoryManager from '@/components/CategoryManager';
 import BudgetManager from '@/components/BudgetManager';
 import ContractManager from '@/components/ContractManager';
 import SummaryCards from '@/components/SummaryCards';
 import MonthlyOverview from '@/components/MonthlyOverview';
+import GoalManager, { GoalWithCalc } from '@/components/GoalManager';
 import TransactionForm from '@/components/TransactionForm';
 import PlannedTransactions from '@/components/PlannedTransactions';
 import CompletedTransactions from '@/components/CompletedTransactions';
@@ -18,6 +19,7 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Stav pre úpravu transakcie
@@ -52,6 +54,15 @@ export default function Home() {
       }
     }
 
+    const savedGoals = localStorage.getItem('app_goals');
+    if (savedGoals) {
+      try {
+        setGoals(JSON.parse(savedGoals));
+      } catch {
+        setGoals([]);
+      }
+    }
+
     const savedTransactions = localStorage.getItem('app_transactions');
     if (savedTransactions) {
       try {
@@ -79,6 +90,10 @@ export default function Home() {
   useEffect(() => {
     if (isLoaded) localStorage.setItem('app_budgets', JSON.stringify(budgets));
   }, [budgets, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) localStorage.setItem('app_goals', JSON.stringify(goals));
+  }, [goals, isLoaded]);
 
   const handleSaveBudget = (catId: string, limitAmount: number) => {
     setBudgets((prev) => {
@@ -174,13 +189,15 @@ export default function Home() {
   };
 
   const handleResetData = () => {
-    if (confirm('Naozaj chceš obnoviť predvolené testovacie dáta, kategórie aj rozpočty?')) {
+    if (confirm('Naozaj chceš obnoviť predvolené testovacie dáta, kategórie, rozpočty aj ciele?')) {
       setTransactions(MOCK_TRANSACTIONS);
       setCategories(INITIAL_CATEGORIES);
       setBudgets([]);
+      setGoals([]);
       localStorage.setItem('app_transactions', JSON.stringify(MOCK_TRANSACTIONS));
       localStorage.setItem('app_categories', JSON.stringify(INITIAL_CATEGORIES));
       localStorage.removeItem('app_budgets');
+      localStorage.removeItem('app_goals');
     }
   };
 
@@ -193,6 +210,31 @@ export default function Home() {
     setCategories(data.categories);
     setBudgets(data.budgets);
     // Uloženie do localStorage prebehne automaticky cez efekty vyššie.
+  };
+
+  const handleAddGoal = (data: { title: string; targetAmount: number; targetDate: string }) => {
+    const newGoal: Goal = {
+      id: `goal-${crypto.randomUUID()}`,
+      title: data.title,
+      targetAmount: data.targetAmount,
+      currentAmount: 0,
+      targetDate: data.targetDate,
+    };
+    setGoals((prev) => [...prev, newGoal]);
+  };
+
+  const handleDeleteGoal = (id: string) => {
+    if (confirm('Naozaj chceš zmazať tento cieľ?')) {
+      setGoals((prev) => prev.filter((g) => g.id !== id));
+    }
+  };
+
+  const handleContributeGoal = (id: string, amount: number) => {
+    setGoals((prev) =>
+      prev.map((g) =>
+        g.id === id ? { ...g, currentAmount: g.currentAmount + amount } : g
+      )
+    );
   };
 
   const currentMonthStr = new Date().toISOString().slice(0, 7);
@@ -249,8 +291,31 @@ export default function Home() {
     .filter((b) => !categoriesWithExpensesThisMonth.has(b.categoryId))
     .reduce((acc, b) => acc + b.limitAmount, 0);
 
-  // Ciele zatiaľ nerátame (pribudnú v ďalšom kroku).
-  const monthlyGoals = 0;
+  // === Ciele: dopočítame mesačnú sumu potrebnú na dosiahnutie ===
+  const monthsBetween = (fromDate: Date, toDateStr: string): number => {
+    const to = new Date(toDateStr);
+    if (isNaN(to.getTime())) return 1;
+    const months =
+      (to.getFullYear() - fromDate.getFullYear()) * 12 +
+      (to.getMonth() - fromDate.getMonth());
+    return months;
+  };
+
+  const goalsWithCalc: GoalWithCalc[] = goals.map((goal) => {
+    const remaining = goal.targetAmount - goal.currentAmount;
+    const isReached = remaining <= 0;
+
+    const monthsLeftRaw = monthsBetween(new Date(), goal.targetDate);
+    const isOverdue = !isReached && monthsLeftRaw < 0;
+    // Aspoň 1 mesiac, aby sme nedelili nulou ani zápornom.
+    const monthsRemaining = Math.max(1, monthsLeftRaw);
+    const monthlyRequired = isReached ? 0 : Math.max(0, remaining) / monthsRemaining;
+
+    return { goal, monthlyRequired, monthsRemaining, isReached, isOverdue };
+  });
+
+  // Súčet mesačných odkladov na ciele -> riadok vo vodopáde.
+  const monthlyGoals = goalsWithCalc.reduce((acc, g) => acc + g.monthlyRequired, 0);
 
   const freeToSpend = monthlyIncome - monthlyFixed - monthlyEnvelopes - monthlyGoals;
 
@@ -305,6 +370,14 @@ export default function Home() {
         perDay={perDay}
         remainingDays={remainingDays}
         hasIncome={monthlyIncome > 0}
+      />
+
+      {/* MODUL: Sporiace ciele */}
+      <GoalManager
+        goals={goalsWithCalc}
+        onAddGoal={handleAddGoal}
+        onDeleteGoal={handleDeleteGoal}
+        onContribute={handleContributeGoal}
       />
 
       {/* MODUL: Záloha dát (export / import) */}

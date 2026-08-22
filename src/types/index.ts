@@ -35,6 +35,14 @@ export interface Budget {
   limitAmount: number;
 }
 
+export interface Goal {
+  id: string;
+  title: string;
+  targetAmount: number;    // Cieľová suma (napr. 5000 €)
+  currentAmount: number;   // Koľko už je odložené
+  targetDate: string;      // Dokedy (YYYY-MM-DD)
+}
+
 export interface CategoryBenchmark {
   categoryId: string;
   averagePrice: number; // Referenčná / priemerná cena na trhu
