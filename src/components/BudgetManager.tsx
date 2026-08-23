@@ -9,6 +9,8 @@ interface BudgetManagerProps {
   budgets: Budget[];
   onSaveBudget: (categoryId: string, limitAmount: number) => void;
   onDeleteBudget: (budgetId: string) => void;
+  useEnvelopes: boolean;
+  onToggleEnvelopes: () => void;
 }
 
 export default function BudgetManager({
@@ -17,6 +19,8 @@ export default function BudgetManager({
   budgets,
   onSaveBudget,
   onDeleteBudget,
+  useEnvelopes,
+  onToggleEnvelopes,
 }: BudgetManagerProps) {
   const expenseCategories = useMemo(
     () => categories.filter((cat) => cat.type === 'EXPENSE'),
@@ -52,7 +56,40 @@ export default function BudgetManager({
 
   return (
     <div className="fin-card p-6">
-      <div className="flex justify-between items-center mb-6">
+      {/* Prepínač: používať obálky? */}
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
+            Používať obálky (mesačné rozpočty)
+          </p>
+          <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>
+            Paušálne limity na bežné míňanie (potraviny, zábava). Keď je vypnuté,
+            zadaj si paušálne výdavky ako obyčajné opakované platby.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onToggleEnvelopes}
+          role="switch"
+          aria-checked={useEnvelopes}
+          className="relative w-12 h-7 rounded-full flex-shrink-0 transition-colors"
+          style={{ background: useEnvelopes ? 'var(--brand)' : '#d8d3e6' }}
+          title={useEnvelopes ? 'Vypnúť obálky' : 'Zapnúť obálky'}
+        >
+          <span
+            className="absolute top-1 w-5 h-5 rounded-full bg-white transition-all"
+            style={{ left: useEnvelopes ? '26px' : '4px' }}
+          />
+        </button>
+      </div>
+
+      {!useEnvelopes ? (
+        <p className="mt-4 text-sm rounded-xl px-3 py-2" style={{ background: '#faf9fd', color: 'var(--ink-soft)' }}>
+          Obálky sú vypnuté — v prehľade „Koľko mi ostáva“ sa nezobrazujú a nepočítajú.
+          Paušálne výdavky (napr. potraviny 1000 €) si pridaj cez „+“ ako opakovaný výdavok.
+        </p>
+      ) : (
+      <div className="flex justify-between items-center mb-6 mt-6">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="text-sm font-medium" style={{ color: 'var(--brand-dark)' }}
@@ -60,8 +97,9 @@ export default function BudgetManager({
           {isOpen ? 'Skryť' : 'Zobraziť'}
         </button>
       </div>
+      )}
 
-      {isOpen && (
+      {useEnvelopes && isOpen && (
         <div className="space-y-6">
           <form onSubmit={handleSave} className="flex gap-4 items-end bg-gray-50 p-4 rounded-lg">
             <div className="flex-1">

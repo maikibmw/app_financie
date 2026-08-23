@@ -10,6 +10,7 @@ interface MonthlyOverviewProps {
   perDay: number;
   remainingDays: number;
   hasIncome: boolean;
+  showEnvelopes: boolean;
 }
 
 export default function MonthlyOverview({
@@ -22,6 +23,7 @@ export default function MonthlyOverview({
   perDay,
   remainingDays,
   hasIncome,
+  showEnvelopes,
 }: MonthlyOverviewProps) {
   const isNegative = free < 0;
   const heroColor = isNegative ? 'var(--neg)' : 'var(--ink)';
@@ -29,7 +31,9 @@ export default function MonthlyOverview({
   const rows = [
     { icon: '↙', label: 'Očakávaný príjem', hint: '', value: income, sign: '+', positive: true, dim: false },
     { icon: '📄', label: 'Fixné záväzky', hint: 'hypotéka, paušály, poistky', value: fixedObligations, sign: '−', positive: false, dim: false },
-    { icon: '👛', label: 'Obálky', hint: 'potraviny, zábava (paušálne)', value: envelopes, sign: '−', positive: false, dim: false },
+    ...(showEnvelopes
+      ? [{ icon: '👛', label: 'Obálky', hint: 'potraviny, zábava (paušálne)', value: envelopes, sign: '−', positive: false, dim: false }]
+      : []),
     { icon: '🎯', label: 'Sporenie na ciele', hint: goals > 0 ? 'podľa tvojich cieľov' : 'zatiaľ žiadne ciele', value: goals, sign: '−', positive: false, dim: goals === 0 },
   ];
 

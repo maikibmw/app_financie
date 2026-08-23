@@ -49,6 +49,8 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
       dueDate: status === 'PLANNED' ? (dueDate || todayStr) : undefined,
       isRecurring,
       recurrenceInterval,
+      seriesId: isRecurring ? `ser-${crypto.randomUUID()}` : undefined,
+      seriesAmount: isRecurring ? parseFloat(amount) : undefined,
       provider: provider.trim() || undefined,
       contractNumber: contractNumber.trim() || undefined,
       contractEndDate: contractEndDate.trim() || undefined,

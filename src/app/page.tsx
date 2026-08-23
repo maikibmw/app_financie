@@ -112,6 +112,9 @@ export default function Home() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Voliteľné obálky (mesačné rozpočty). Predvolene zapnuté.
+  const [useEnvelopes, setUseEnvelopes] = useState(true);
+
   // Stav pre úpravu transakcie
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
@@ -159,6 +162,11 @@ export default function Home() {
       }
     }
 
+    const savedUseEnvelopes = localStorage.getItem('app_use_envelopes');
+    if (savedUseEnvelopes !== null) {
+      setUseEnvelopes(savedUseEnvelopes === 'true');
+    }
+
     const savedTransactions = localStorage.getItem('app_transactions');
     if (savedTransactions) {
       try {
@@ -190,6 +198,10 @@ export default function Home() {
   useEffect(() => {
     if (isLoaded) localStorage.setItem('app_goals', JSON.stringify(goals));
   }, [goals, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) localStorage.setItem('app_use_envelopes', String(useEnvelopes));
+  }, [useEnvelopes, isLoaded]);
 
   const handleSaveBudget = (catId: string, limitAmount: number) => {
     setBudgets((prev) => {
@@ -249,9 +261,16 @@ export default function Home() {
         const baseDate = tx.dueDate || tx.date || todayStr;
         const nextDueDate = calculateNextDate(baseDate, tx.recurrenceInterval);
 
+        // Ďalší mesiac vychádza zo štandardnej sumy série (nie z jednorazovej zmeny).
+        const templateAmount = tx.seriesAmount ?? tx.amount;
+        const seriesId = tx.seriesId ?? `ser-${crypto.randomUUID()}`;
+
         const nextTransaction: Transaction = {
           ...tx,
           id: `tx-${crypto.randomUUID()}`,
+          amount: templateAmount,
+          seriesAmount: templateAmount,
+          seriesId,
           status: 'PLANNED',
           date: todayStr,
           dueDate: nextDueDate,
@@ -274,12 +293,53 @@ export default function Home() {
     }
   };
 
-  const handleUpdateTransaction = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateTransaction = (scope: 'one' | 'future') => {
     if (!editingTx) return;
 
+    const edited = editingTx;
+    const original = transactions.find((t) => t.id === edited.id);
+    const isRecurring = !!edited.recurrenceInterval && edited.recurrenceInterval !== 'NONE';
+    const seriesId = edited.seriesId ?? (isRecurring ? `ser-${crypto.randomUUID()}` : undefined);
+    // Štandardná suma série pred úpravou (aby "len túto" nezmenila budúce).
+    const templateBefore = original?.seriesAmount ?? original?.amount ?? edited.amount;
+    const editedKey = edited.dueDate || edited.date;
+
     setTransactions((prev) =>
-      prev.map((t) => (t.id === editingTx.id ? editingTx : t))
+      prev.map((t) => {
+        // Samotná upravovaná transakcia
+        if (t.id === edited.id) {
+          if (!isRecurring) return { ...edited };
+          if (scope === 'future') {
+            // Táto aj budúce: nová suma sa stáva štandardom série.
+            return { ...edited, seriesId, seriesAmount: edited.amount };
+          }
+          // Len túto: zmení sa iba tento výskyt, štandard série ostáva.
+          return { ...edited, seriesId, seriesAmount: templateBefore };
+        }
+
+        // Ostatné (budúce) výskyty tej istej série – len pri "aj budúce"
+        if (scope === 'future' && isRecurring && seriesId && t.seriesId === seriesId) {
+          const tKey = t.dueDate || t.date;
+          if (tKey >= editedKey) {
+            return {
+              ...t,
+              description: edited.description,
+              amount: edited.amount,
+              seriesAmount: edited.amount,
+              type: edited.type,
+              categoryId: edited.categoryId,
+              provider: edited.provider,
+              contractNumber: edited.contractNumber,
+              contractEndDate: edited.contractEndDate,
+              note: edited.note,
+              recurrenceInterval: edited.recurrenceInterval,
+              isRecurring: edited.isRecurring,
+            };
+          }
+        }
+
+        return t;
+      })
     );
     setEditingTx(null);
   };
@@ -383,9 +443,11 @@ export default function Home() {
   const categoriesWithExpensesThisMonth = new Set(
     thisMonthTx.filter((t) => t.type === 'EXPENSE').map((t) => t.categoryId)
   );
-  const monthlyEnvelopes = budgets
-    .filter((b) => !categoriesWithExpensesThisMonth.has(b.categoryId))
-    .reduce((acc, b) => acc + b.limitAmount, 0);
+  const monthlyEnvelopes = useEnvelopes
+    ? budgets
+        .filter((b) => !categoriesWithExpensesThisMonth.has(b.categoryId))
+        .reduce((acc, b) => acc + b.limitAmount, 0)
+    : 0;
 
   // === Ciele: dopočítame mesačnú sumu potrebnú na dosiahnutie ===
   const monthsBetween = (fromDate: Date, toDateStr: string): number => {
@@ -441,7 +503,7 @@ export default function Home() {
   // Má používateľ nastavený opakovaný príjem (napr. výplatu)?
   const hasRecurringIncome = recurringPlanned.some((t) => t.type === 'INCOME');
   // Obálky (rozpočty) platia každý mesiac.
-  const fullEnvelopes = budgets.reduce((acc, b) => acc + b.limitAmount, 0);
+  const fullEnvelopes = useEnvelopes ? budgets.reduce((acc, b) => acc + b.limitAmount, 0) : 0;
 
   const occurrenceInMonth = (t: Transaction, monthNum: number): number => {
     if (t.recurrenceInterval === 'MONTHLY') return t.amount;
@@ -599,6 +661,7 @@ export default function Home() {
               perDay={perDay}
               remainingDays={remainingDays}
               hasIncome={monthlyIncome > 0}
+              showEnvelopes={useEnvelopes}
             />
           </Section>
 
@@ -686,6 +749,8 @@ export default function Home() {
               budgets={budgets}
               onSaveBudget={handleSaveBudget}
               onDeleteBudget={handleDeleteBudget}
+              useEnvelopes={useEnvelopes}
+              onToggleEnvelopes={() => setUseEnvelopes((v) => !v)}
             />
           </Section>
 
@@ -706,7 +771,7 @@ export default function Home() {
           value={editingTx}
           categories={categories}
           onChange={setEditingTx}
-          onSubmit={handleUpdateTransaction}
+          onSave={handleUpdateTransaction}
           onCancel={() => setEditingTx(null)}
         />
       )}

@@ -27,6 +27,11 @@ export interface Transaction {
   contractNumber?: string;    // Číslo zmluvy / VS
   contractEndDate?: string;   // Dátum konca viazanosti / zmluvy
   note?: string;              // Poznámka
+
+  // Opakované platby: prepojenie mesačných výskytov jednej série
+  // a jej "štandardná" suma (z nej sa generujú ďalšie mesiace).
+  seriesId?: string;
+  seriesAmount?: number;
 }
 
 export interface Budget {
