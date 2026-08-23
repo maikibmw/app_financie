@@ -18,6 +18,77 @@ import DataBackup from '@/components/DataBackup';
 import QuickAddTransaction from '@/components/QuickAddTransaction';
 
 // Vektorové ikonky sekcií (bez externej knižnice). Farbu určuje rodič cez currentColor.
+// --- Automatické generovanie opakovaných platieb na aktuálny mesiac ---
+// Krok ďalšieho dátumu podľa intervalu.
+function nextOccurrenceDate(dateString: string, interval?: RecurrenceInterval): string {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  if (interval === 'WEEKLY') date.setDate(date.getDate() + 7);
+  else if (interval === 'MONTHLY') date.setMonth(date.getMonth() + 1);
+  else if (interval === 'YEARLY') date.setFullYear(date.getFullYear() + 1);
+  return date.toISOString().split('T')[0];
+}
+
+// Doplní chýbajúce opakované výskyty až po aktuálny mesiac.
+// Nič nemaže; neuhradené staré výskyty ostávajú (zobrazia sa ako "po splatnosti").
+function generateDueRecurring(txs: Transaction[]): Transaction[] {
+  const today = new Date();
+  const curKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+  // 1. Migrácia: opakovaným bez série doplníme seriesId a štandardnú sumu.
+  const list: Transaction[] = txs.map((t) => {
+    const isRec = t.recurrenceInterval && t.recurrenceInterval !== 'NONE';
+    if (isRec && !t.seriesId) {
+      return { ...t, seriesId: `ser-${crypto.randomUUID()}`, seriesAmount: t.seriesAmount ?? t.amount };
+    }
+    return t;
+  });
+
+  // 2. Zoskupenie podľa série.
+  const seriesMap = new Map<string, Transaction[]>();
+  for (const t of list) {
+    const isRec = t.recurrenceInterval && t.recurrenceInterval !== 'NONE';
+    if (isRec && t.seriesId) {
+      const arr = seriesMap.get(t.seriesId) || [];
+      arr.push(t);
+      seriesMap.set(t.seriesId, arr);
+    }
+  }
+
+  // 3. Doplnenie výskytov až po aktuálny mesiac.
+  const additions: Transaction[] = [];
+  for (const [seriesId, arr] of seriesMap) {
+    const sorted = [...arr].sort((a, b) => (a.dueDate || a.date).localeCompare(b.dueDate || b.date));
+    const template = sorted[sorted.length - 1];
+    const templateAmount = template.seriesAmount ?? template.amount;
+    const existingDates = new Set(arr.map((t) => t.dueDate || t.date));
+
+    let cursorDate = template.dueDate || template.date;
+    let guard = 0;
+    while (guard < 60) {
+      guard++;
+      const nDate = nextOccurrenceDate(cursorDate, template.recurrenceInterval);
+      const nMonth = nDate.slice(0, 7);
+      if (nMonth > curKey) break; // negenerujeme do budúcnosti
+      cursorDate = nDate;
+      if (existingDates.has(nDate)) continue; // žiadne duplicity
+      existingDates.add(nDate);
+      additions.push({
+        ...template,
+        id: `tx-${crypto.randomUUID()}`,
+        amount: templateAmount,
+        seriesAmount: templateAmount,
+        seriesId,
+        status: 'PLANNED',
+        date: nDate,
+        dueDate: nDate,
+      });
+    }
+  }
+
+  return [...additions, ...list];
+}
+
 function SectionIcon({ name }: { name: string }) {
   const p = {
     width: 18,
@@ -168,15 +239,16 @@ export default function Home() {
     }
 
     const savedTransactions = localStorage.getItem('app_transactions');
+    let loadedTx = MOCK_TRANSACTIONS;
     if (savedTransactions) {
       try {
-        setTransactions(JSON.parse(savedTransactions));
+        loadedTx = JSON.parse(savedTransactions);
       } catch {
-        setTransactions(MOCK_TRANSACTIONS);
+        loadedTx = MOCK_TRANSACTIONS;
       }
-    } else {
-      setTransactions(MOCK_TRANSACTIONS);
     }
+    // Doplní opakované platby na aktuálny mesiac (bez klikania, bez duplicít).
+    setTransactions(generateDueRecurring(loadedTx));
 
     setIsLoaded(true);
   }, []);
@@ -492,10 +564,18 @@ export default function Home() {
   // === Projekcia cashflow na najbližších 6 mesiacov ===
   const SK_MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Máj', 'Jún', 'Júl', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
 
-  // Aktívne opakované platby (jedna "šablóna" na sériu = plánované opakované).
-  const recurringPlanned = transactions.filter(
+  // Aktívne opakované platby. Do projekcie berieme každú sériu len raz
+  // (aj keby mala viac neuhradených výskytov, aby sa suma nenásobila).
+  const recurringPlannedAll = transactions.filter(
     (t) => t.status === 'PLANNED' && t.recurrenceInterval && t.recurrenceInterval !== 'NONE'
   );
+  const seenSeries = new Set<string>();
+  const recurringPlanned = recurringPlannedAll.filter((t) => {
+    const key = t.seriesId || t.id;
+    if (seenSeries.has(key)) return false;
+    seenSeries.add(key);
+    return true;
+  });
   // Jednorazové plánované platby (konkrétny mesiac).
   const oneTimePlanned = transactions.filter(
     (t) => t.status === 'PLANNED' && (!t.recurrenceInterval || t.recurrenceInterval === 'NONE')
