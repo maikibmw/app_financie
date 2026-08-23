@@ -438,6 +438,8 @@ export default function Home() {
   const oneTimePlanned = transactions.filter(
     (t) => t.status === 'PLANNED' && (!t.recurrenceInterval || t.recurrenceInterval === 'NONE')
   );
+  // Má používateľ nastavený opakovaný príjem (napr. výplatu)?
+  const hasRecurringIncome = recurringPlanned.some((t) => t.type === 'INCOME');
   // Obálky (rozpočty) platia každý mesiac.
   const fullEnvelopes = budgets.reduce((acc, b) => acc + b.limitAmount, 0);
 
@@ -501,7 +503,9 @@ export default function Home() {
       .filter((g) => !g.isReached && g.goal.targetDate.slice(0, 7) >= key)
       .reduce((acc, g) => acc + g.monthlyRequired, 0);
 
-    const income = monthlyIncome + recurringIncome + oneTimeIncome;
+    // Príjem: ak máš opakovaný príjem, použijeme jeho projekciu;
+    // inak predpokladáme rovnaký príjem ako tento mesiac. (+ jednorazové plánované)
+    const income = (hasRecurringIncome ? recurringIncome : monthlyIncome) + oneTimeIncome;
     const expense = recurringExpense + fullEnvelopes + goalContribution + oneTimeExpense;
 
     return { label, income, expense, net: income - expense, isCurrent: false, isPast: false, isEmpty: false };
@@ -639,7 +643,7 @@ export default function Home() {
           </Section>
 
           {allPlannedTransactions.length > 0 && (
-            <Section icon="clock" iconColor="#b4690e" iconBg="#fdf6ec" title="Očakávané výdavky" subtitle="platby, ktoré ťa ešte čakajú">
+            <Section icon="clock" iconColor="#b4690e" iconBg="#fdf6ec" title="Očakávané platby" subtitle="príjmy aj výdavky, ktoré ťa ešte čakajú">
               <PlannedTransactions
                 visibleTransactions={visiblePlannedTransactions}
                 categories={categories}

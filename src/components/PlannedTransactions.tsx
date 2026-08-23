@@ -53,7 +53,7 @@ export default function PlannedTransactions({
 
       {visibleTransactions.length === 0 ? (
         <div className="p-8 text-center text-sm" style={{ color: 'var(--ink-faint)' }}>
-          Na tento mesiac nemáš žiadne plánované výdavky.{' '}
+          Na tento mesiac nemáš žiadne plánované platby.{' '}
           <button
             onClick={onToggleShowAll}
             className="underline font-semibold"
@@ -67,6 +67,7 @@ export default function PlannedTransactions({
           {visibleTransactions.map((tx, i) => {
             const category = getCategory(tx.categoryId);
             const isOverdue = tx.dueDate ? tx.dueDate < todayStr : false;
+            const isIncome = tx.type === 'INCOME';
             const rec = recLabel(tx.recurrenceInterval);
 
             const meta = [category?.name || 'Neznáma', `📅 ${tx.dueDate || tx.date}`, rec, tx.provider ? `🏢 ${tx.provider}` : null]
@@ -94,7 +95,7 @@ export default function PlannedTransactions({
                           className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
                           style={{ background: 'var(--neg-soft)', color: 'var(--neg)' }}
                         >
-                          Po splatnosti
+                          {isIncome ? 'Mešká' : 'Po splatnosti'}
                         </span>
                       )}
                     </div>
@@ -105,15 +106,18 @@ export default function PlannedTransactions({
                 </div>
 
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="font-semibold text-sm whitespace-nowrap" style={{ color: 'var(--warn)' }}>
-                    −{tx.amount.toFixed(2)} €
+                  <span
+                    className="font-semibold text-sm whitespace-nowrap"
+                    style={{ color: isIncome ? 'var(--pos)' : 'var(--warn)' }}
+                  >
+                    {isIncome ? '+' : '−'}{tx.amount.toFixed(2)} €
                   </span>
                   <button
                     onClick={() => onMarkCompleted(tx)}
                     className="fin-btn text-white"
                     style={{ padding: '0.35rem 0.8rem', fontSize: '0.72rem', background: 'var(--pos)' }}
                   >
-                    ✓ Uhradiť
+                    {isIncome ? '✓ Prijaté' : '✓ Uhradiť'}
                   </button>
                   <div className="flex items-center gap-1">
                     <button
